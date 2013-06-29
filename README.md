@@ -12,12 +12,16 @@ Still to do: other higher-order functions (map, reduce, etc.)
 
 For example uses see go_test.go.  Typical use-case:
 
-'''go
+```go
 a := []int{1, 2, 3, 4, 5}
 f := func(x int) int {
   return x + 1
 }
 b := Map(a, f).([]int) // will be the same as []int{2, 3, 4, 5, 6}
-'''
+```
 
-(Since Go lacks generics, the type assertion is required for the results.
+(Since Go lacks generics, the type assertion is required for the results.)
+
+# Performance note
+
+This is implemented using reflection, so is not to be expected to be as fast as low-level operations.
