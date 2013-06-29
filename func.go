@@ -49,13 +49,13 @@ func MapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
 	go func() {
 		fVal := reflect.ValueOf(f)
 		chanValue := reflect.ValueOf(dataChan)
-		value, ok := chanValue.Recv();
+		value, ok := chanValue.Recv()
 		for ok {
 			results := fVal.Call([]reflect.Value{value})
 			resultValue.Send(results[0])
-			value, ok = chanValue.Recv();
+			value, ok = chanValue.Recv()
 		}
-		resultValue.Close();
+		resultValue.Close()
 	}()
 
 	return
@@ -69,4 +69,38 @@ func Maps(dataSlice interface{}, mapFunc interface{}) (resultSlice interface{}) 
 
 func Map(dataSlice interface{}, mapFunc interface{}) (resultChan interface{}) {
 	return MapChan(SliceToChan(dataSlice), mapFunc)
+}
+
+func FilterChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
+	chanType := reflect.TypeOf(dataChan)
+	elemType := chanType.Elem()
+	resultValue := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, elemType), 0)
+	resultChan = resultValue.Interface()
+
+	go func() {
+		fVal := reflect.ValueOf(f)
+		chanValue := reflect.ValueOf(dataChan)
+		value, ok := chanValue.Recv()
+		for ok {
+			results := fVal.Call([]reflect.Value{value})
+			pass := results[0].Interface().(bool)
+			if pass {
+				resultValue.Send(value)
+			}
+			value, ok = chanValue.Recv()
+		}
+		resultValue.Close()
+	}()
+
+	return
+}
+
+func Filters(dataSlice interface{}, f interface{}) (resultSlice interface{}) {
+	out := FilterChan(SliceToChan(dataSlice), f)
+	resultSlice = ChanToSlice(out)
+	return
+}
+
+func Filter(dataSlice interface{}, f interface{}) (resultChan interface{}) {
+	return FilterChan(SliceToChan(dataSlice), f)
 }

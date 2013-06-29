@@ -65,3 +65,18 @@ func TestMapChan(t *testing.T) {
 		t.Errorf("%v does not equal 2", result)
 	}
 }
+
+func isEven(a int) bool {
+	return a % 2 == 0
+}
+
+func TestFilters(t *testing.T) {
+	a := []int{1, 2, 3, 4, 5}
+	b := Filters(a, isEven).([]int)
+	if len(b) != 2 {
+		t.Error("Expecting two results")
+	}
+	if b[0] != 2 || b[1] != 4 {
+		t.Error("Unexpected result:", b)
+	}
+}
