@@ -50,3 +50,15 @@ func TestMapStruct(t *testing.T) {
 		t.Errorf("%v does not equal the expected result")
 	}
 }
+
+func TestMapChan(t *testing.T) {
+	in := make(chan int)
+	out := MapChan(in, double).(chan int)
+
+	in <- 1
+	result := <- out
+
+	if result != 2 {
+		t.Errorf("%v does not equal 2", result)
+	}
+}

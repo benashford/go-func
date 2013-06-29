@@ -8,52 +8,54 @@ const (
 	defaultCapacity = 10
 )
 
-func SliceToChan(dataSlice interface{}) (ch chan interface{}) {
-	ch = make(chan interface{})
+func SliceToChan(dataSlice interface{}) (ch interface{}) {
+	sliceType := reflect.TypeOf(dataSlice)
+	elementType := sliceType.Elem()
+	channel := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, elementType), 0)
+	ch = channel.Interface()
 
 	go func() {
 		dataSliceValue := reflect.ValueOf(dataSlice)
 		dataSliceLen   := dataSliceValue.Len()
 		for i := 0; i < dataSliceLen; i++ {
 			dsv := dataSliceValue.Index(i)
-			ch <- dsv.Interface()
+			channel.Send(dsv)
 		}
-		close(ch)
+		channel.Close()
 	}()
 
 	return
 }
 
-func ChanToSlice(ch chan interface{}) interface{} {
-	first := <- ch
-	resultType := reflect.SliceOf(reflect.TypeOf(first))
-	result := reflect.MakeSlice(resultType, 1, defaultCapacity)
-	result.Index(0).Set(reflect.ValueOf(first))
-	for val := range ch {
-		result = reflect.Append(result, reflect.ValueOf(val))
+func ChanToSlice(ch interface{}) interface{} {
+	chType := reflect.TypeOf(ch)
+	resultType := chType.Elem()
+	result := reflect.MakeSlice(reflect.SliceOf(resultType), 0, defaultCapacity)
+	chValue := reflect.ValueOf(ch)
+	value, ok := chValue.Recv();
+	for ok {
+		result = reflect.Append(result, value)
+		value, ok = chValue.Recv();
 	}
 	return result.Interface()
 }
 
-func call(f interface{}, data interface{}) interface{} {
-	fVal := reflect.ValueOf(f)
-	dataVal := reflect.ValueOf(data)
-	params := make([]reflect.Value, 1)
-	params[0] = dataVal
-
-	results := fVal.Call(params)
-
-	return results[0].Interface();
-}
-
-func MapChan(data chan interface{}, f interface{}) (result chan interface{}) {
-	result = make(chan interface{})
+func MapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
+	fType := reflect.TypeOf(f)
+	fRetType := fType.Out(0)
+	resultValue := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, fRetType), 0)
+	resultChan = resultValue.Interface()
 
 	go func() {
-		for d := range data {
-			result <- call(f, d)
+		fVal := reflect.ValueOf(f)
+		chanValue := reflect.ValueOf(dataChan)
+		value, ok := chanValue.Recv();
+		for ok {
+			results := fVal.Call([]reflect.Value{value})
+			resultValue.Send(results[0])
+			value, ok = chanValue.Recv();
 		}
-		close(result)
+		resultValue.Close();
 	}()
 
 	return
