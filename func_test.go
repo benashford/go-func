@@ -10,9 +10,12 @@ func double(a int) int {
 
 func TestMapInt(t *testing.T) {
 	a := []int{1, 2, 3}
-	b := Map(a, double).([]int)
-	if b[0] != 2 || b[1] != 4 || b[2] != 6 {
-		t.Errorf("%v does not equal [2, 4, 6]", b)
+	b := Map(a, double).(chan int)
+	x := <- b
+	y := <- b
+	z := <- b
+	if x != 2 || y != 4 || z != 6 {
+		t.Errorf("does not equal [2, 4, 6]")
 	}
 }
 
@@ -22,7 +25,7 @@ func stringLength(s string) int {
 
 func TestMapString(t *testing.T) {
 	a := []string{"a", "bee", "sea", "dee", "eff", "gee", "aitch"}
-	b := Map(a, stringLength).([]int)
+	b := Maps(a, stringLength).([]int)
 	if len(b) != 7 {
 		t.Error("Expecting seven values")
 	}
@@ -45,7 +48,7 @@ func TestMapStruct(t *testing.T) {
 	ts1 := &TestStruct{100, 0}
 	ts2 := &TestStruct{200, 0}
 	a := []*TestStruct{ts1, ts2}
-	b := Map(a, doToTest).([]*TestStruct)
+	b := Maps(a, doToTest).([]*TestStruct)
 	if b[0].b != 101 || b[1].b != 201 {
 		t.Errorf("%v does not equal the expected result")
 	}

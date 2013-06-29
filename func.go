@@ -61,8 +61,12 @@ func MapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
 	return
 }
 
-func Map(dataSlice interface{}, mapFunc interface{}) (resultSlice interface{}) {
+func Maps(dataSlice interface{}, mapFunc interface{}) (resultSlice interface{}) {
 	out := MapChan(SliceToChan(dataSlice), mapFunc)
 	resultSlice = ChanToSlice(out)
 	return
+}
+
+func Map(dataSlice interface{}, mapFunc interface{}) (resultChan interface{}) {
+	return MapChan(SliceToChan(dataSlice), mapFunc)
 }
