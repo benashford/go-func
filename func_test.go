@@ -19,6 +19,17 @@ func TestMapInt(t *testing.T) {
 	}
 }
 
+func TestPMapInt(t *testing.T) {
+	a := []int{1, 2, 3}
+	b := PMap(a, double).(chan int)
+	x := <- b
+	y := <- b
+	z := <- b
+	if x != 2 || y != 4 || z != 6 {
+		t.Errorf("does not equal [2, 4, 6]")
+	}
+}
+
 func stringLength(s string) int {
 	return len(s)
 }
@@ -26,6 +37,17 @@ func stringLength(s string) int {
 func TestMapString(t *testing.T) {
 	a := []string{"a", "bee", "sea", "dee", "eff", "gee", "aitch"}
 	b := Maps(a, stringLength).([]int)
+	if len(b) != 7 {
+		t.Error("Expecting seven values")
+	}
+	if b[0] != 1 || b[1] != 3 || b[6] != 5 {
+		t.Errorf("%v does not equal [1, 3, 3, 3, 3, 3, 5]", b)
+	}
+}
+
+func TestPMapString(t *testing.T) {
+	a := []string{"a", "bee", "sea", "dee", "eff", "gee", "aitch"}
+	b := PMaps(a, stringLength).([]int)
 	if len(b) != 7 {
 		t.Error("Expecting seven values")
 	}

@@ -2,10 +2,15 @@ package funcs
 
 import (
 	"reflect"
+	"runtime"
 )
 
 const (
 	defaultCapacity = 10
+)
+
+var (
+	cpus = runtime.NumCPU()
 )
 
 func SliceToChan(dataSlice interface{}) (ch interface{}) {
@@ -69,6 +74,77 @@ func Maps(dataSlice interface{}, mapFunc interface{}) (resultSlice interface{}) 
 
 func Map(dataSlice interface{}, mapFunc interface{}) (resultChan interface{}) {
 	return MapChan(SliceToChan(dataSlice), mapFunc)
+}
+
+func pMapChanInt(inChan reflect.Value, f interface{}, outChan reflect.Value) {
+	fVal := reflect.ValueOf(f)
+	val, ok := inChan.Recv()
+	for ok {
+		results := fVal.Call([]reflect.Value{val})
+		outChan.Send(results[0])
+		val, ok = inChan.Recv()
+	}
+	outChan.Close()
+}
+
+func pMapFeedInChans(dataChan interface{}, inChans []reflect.Value) {
+	dataValue := reflect.ValueOf(dataChan)
+	numChans := len(inChans)
+	idx := 0
+	val, ok := dataValue.Recv()
+	for ok {
+		inChans[idx % numChans].Send(val)
+		idx++
+		val, ok = dataValue.Recv()
+	}
+	for _, inChan := range inChans {
+		inChan.Close()
+	}
+}
+
+func pMapDrainOutChans(outChans []reflect.Value, resultChan reflect.Value) {
+	numChans := len(outChans)
+	idx := 0
+	val, ok := outChans[idx].Recv()
+	for ok {
+		resultChan.Send(val)
+		idx++
+		val, ok = outChans[idx % numChans].Recv()
+	}
+	resultChan.Close()
+}
+
+func PMapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
+	fType := reflect.TypeOf(f)
+	fRetType := fType.Out(0)
+	dataChanType := reflect.TypeOf(dataChan)
+	dataChanElemType := dataChanType.Elem()
+	inChans := make([]reflect.Value, cpus)
+	outChans := make([]reflect.Value, cpus)
+	for i := 0; i < cpus; i++ {
+		inChans[i] = reflect.MakeChan(reflect.ChanOf(reflect.BothDir, dataChanElemType), 1)
+		outChans[i] = reflect.MakeChan(reflect.ChanOf(reflect.BothDir, fRetType), 1)
+
+		go pMapChanInt(inChans[i], f, outChans[i])
+	}
+	go pMapFeedInChans(dataChan, inChans)
+
+	resultChanValue := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, fRetType), cpus)
+	resultChan = resultChanValue.Interface()
+
+	go pMapDrainOutChans(outChans, resultChanValue)
+
+	return
+}
+
+func PMaps(dataSlice interface{}, mapFunc interface{}) (resultSlice interface{}) {
+	out := PMapChan(SliceToChan(dataSlice), mapFunc)
+	resultSlice = ChanToSlice(out)
+	return
+}
+
+func PMap(dataSlice interface{}, mapFunc interface{}) (resultChan interface{}) {
+	return PMapChan(SliceToChan(dataSlice), mapFunc)
 }
 
 func FilterChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
