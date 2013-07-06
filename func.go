@@ -198,10 +198,42 @@ func Filter(data interface{}, f interface{}) (resultChan interface{}) {
 	dataType := reflect.TypeOf(data)
 	switch dataType.Kind() {
 	case reflect.Chan:
-		return filterChan(data, f)
+		resultChan = filterChan(data, f)
 	case reflect.Slice:
-		return filterChan(SliceToChan(data), f)
+		resultChan = filterChan(SliceToChan(data), f)
 	default:
 		panic(fmt.Sprintf("Unexpected data: %v", data))
 	}
+	return
+}
+
+func reduceChan(dataChan interface{}, f interface{}) (result interface{}) {
+	fType := reflect.TypeOf(f)
+	fRetType := fType.Out(0)
+	val := reflect.Zero(fRetType)
+
+	fVal := reflect.ValueOf(f)
+
+	chanValue := reflect.ValueOf(dataChan)
+	value, ok := chanValue.Recv()
+	for ok {
+		results := fVal.Call([]reflect.Value{val, value})
+		val = results[0]
+		value, ok = chanValue.Recv()
+	}
+	result = val.Interface()
+	return
+}
+
+func Reduce(data interface{}, f interface{}) (result interface{}) {
+	dataType := reflect.TypeOf(data)
+	switch dataType.Kind() {
+	case reflect.Chan:
+		result = reduceChan(data, f)
+	case reflect.Slice:
+		result = reduceChan(SliceToChan(data), f)
+	default:
+		panic(fmt.Sprintf("Unexpected data: %v", data))
+	}
+	return
 }

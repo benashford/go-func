@@ -102,3 +102,74 @@ func TestFilters(t *testing.T) {
 		t.Error("Unexpected result:", b)
 	}
 }
+
+func add(a, b int) int {
+	return a + b
+}
+
+func TestReduce(t *testing.T) {
+	a := []int{1, 2, 3, 4}
+	b := Reduce(a, add).(int)
+	if b != 10 {
+		t.Error("Expecting 10, got:", b)
+	}
+}
+
+func appendSlice(l []int, v int) []int {
+	return append(l, v)
+}
+
+func TestReduce2(t *testing.T) {
+	a := []int{1, 2, 3, 4, 5}
+	b := Filter(a, isEven)
+	c := Reduce(b, appendSlice).([]int)
+	if len(c) != 2 {
+		t.Error("Should have length 2, has: ", len(c))
+	}
+	if c[0] != 2 && c[1] != 4 {
+		t.Error("Results not [2, 4]:", c)
+	}
+}
+
+func TestCombine(t *testing.T) {
+	a := []int{1, 2, 3, 4, 5, 6}
+	b := PMap(a, func(x int) int { return x * 3})
+	c := Filter(b, isEven)
+	d := Reduce(c, add).(int)
+
+	if d != 36 {
+		t.Error("Expecting 36 was:", d)
+	}
+}
+
+func fib(idx int) int {
+	if idx == 0 {
+		return 1
+	}	else if idx == 1 {
+		return 1
+	} else {
+		return fib(idx - 2) + fib(idx - 1)
+	}
+}
+
+func BenchmarkMap(b *testing.B) {
+	source := make([]int, 10)
+	for i := 0; i < 10; i++ {
+		source[i] = i
+	}
+	for i := 0; i < b.N; i++ {
+		fibs := Maps(source, fib)
+		b.Log(fibs)
+	}
+}
+
+func BenchmarkPMap(b *testing.B) {
+	source := make([]int, 10)
+	for i := 0; i < 10; i++ {
+		source[i] = i
+	}
+	for i := 0; i < b.N; i++ {
+		fibs := PMaps(source, fib)
+		b.Log(fibs)
+	}
+}
