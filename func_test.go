@@ -152,10 +152,24 @@ func fib(idx int) int {
 	}
 }
 
+func BenchmarkNone(b *testing.B) {
+	source := make([]int, 16)
+	for i := 0; i < 16; i++ {
+		source[i] = i + 30
+	}
+	for i := 0; i < b.N; i++ {
+		dest := make([]int, 16)
+		for idx, val := range source {
+			dest[idx] = fib(val)
+		}
+		b.Log(dest)
+	}
+}
+
 func BenchmarkMap(b *testing.B) {
-	source := make([]int, 10)
-	for i := 0; i < 10; i++ {
-		source[i] = i
+	source := make([]int, 16)
+	for i := 0; i < 16; i++ {
+		source[i] = i + 30
 	}
 	for i := 0; i < b.N; i++ {
 		fibs := Maps(source, fib)
@@ -164,9 +178,9 @@ func BenchmarkMap(b *testing.B) {
 }
 
 func BenchmarkPMap(b *testing.B) {
-	source := make([]int, 10)
-	for i := 0; i < 10; i++ {
-		source[i] = i
+	source := make([]int, 16)
+	for i := 0; i < 16; i++ {
+		source[i] = i + 30
 	}
 	for i := 0; i < b.N; i++ {
 		fibs := PMaps(source, fib)

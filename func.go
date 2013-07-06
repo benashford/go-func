@@ -131,8 +131,8 @@ func pMapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
 	inChans := make([]reflect.Value, cpus)
 	outChans := make([]reflect.Value, cpus)
 	for i := 0; i < cpus; i++ {
-		inChans[i] = reflect.MakeChan(reflect.ChanOf(reflect.BothDir, dataChanElemType), 1)
-		outChans[i] = reflect.MakeChan(reflect.ChanOf(reflect.BothDir, fRetType), 1)
+		inChans[i] = reflect.MakeChan(reflect.ChanOf(reflect.BothDir, dataChanElemType), cpus)
+		outChans[i] = reflect.MakeChan(reflect.ChanOf(reflect.BothDir, fRetType), cpus)
 
 		go pMapChanInt(inChans[i], f, outChans[i])
 	}
