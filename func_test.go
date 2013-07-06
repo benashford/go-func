@@ -78,7 +78,7 @@ func TestMapStruct(t *testing.T) {
 
 func TestMapChan(t *testing.T) {
 	in := make(chan int)
-	out := MapChan(in, double).(chan int)
+	out := Map(in, double).(chan int)
 
 	in <- 1
 	result := <- out

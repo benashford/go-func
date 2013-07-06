@@ -1,6 +1,7 @@
 package funcs
 
 import (
+	"fmt"
 	"reflect"
 	"runtime"
 )
@@ -45,7 +46,7 @@ func ChanToSlice(ch interface{}) interface{} {
 	return result.Interface()
 }
 
-func MapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
+func mapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
 	fType := reflect.TypeOf(f)
 	fRetType := fType.Out(0)
 	resultValue := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, fRetType), 0)
@@ -66,14 +67,22 @@ func MapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
 	return
 }
 
-func Maps(dataSlice interface{}, mapFunc interface{}) (resultSlice interface{}) {
-	out := MapChan(SliceToChan(dataSlice), mapFunc)
+func Maps(data interface{}, mapFunc interface{}) (resultSlice interface{}) {
+	out := Map(data, mapFunc)
 	resultSlice = ChanToSlice(out)
 	return
 }
 
-func Map(dataSlice interface{}, mapFunc interface{}) (resultChan interface{}) {
-	return MapChan(SliceToChan(dataSlice), mapFunc)
+func Map(data interface{}, mapFunc interface{}) (resultChan interface{}) {
+	dataType := reflect.TypeOf(data)
+	switch dataType.Kind() {
+	case reflect.Chan:
+		return mapChan(data, mapFunc)
+	case reflect.Slice:
+		return mapChan(SliceToChan(data), mapFunc)
+	default:
+		panic(fmt.Sprintf("Unrecognised data: %s", data))
+	}
 }
 
 func pMapChanInt(inChan reflect.Value, f interface{}, outChan reflect.Value) {
@@ -114,7 +123,7 @@ func pMapDrainOutChans(outChans []reflect.Value, resultChan reflect.Value) {
 	resultChan.Close()
 }
 
-func PMapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
+func pMapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
 	fType := reflect.TypeOf(f)
 	fRetType := fType.Out(0)
 	dataChanType := reflect.TypeOf(dataChan)
@@ -137,17 +146,25 @@ func PMapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
 	return
 }
 
-func PMaps(dataSlice interface{}, mapFunc interface{}) (resultSlice interface{}) {
-	out := PMapChan(SliceToChan(dataSlice), mapFunc)
+func PMaps(data interface{}, mapFunc interface{}) (resultSlice interface{}) {
+	out := PMap(data, mapFunc)
 	resultSlice = ChanToSlice(out)
 	return
 }
 
-func PMap(dataSlice interface{}, mapFunc interface{}) (resultChan interface{}) {
-	return PMapChan(SliceToChan(dataSlice), mapFunc)
+func PMap(data interface{}, mapFunc interface{}) (resultChan interface{}) {
+	dataType := reflect.TypeOf(data)
+	switch dataType.Kind() {
+	case reflect.Chan:
+		return pMapChan(data, mapFunc)
+	case reflect.Slice:
+		return pMapChan(SliceToChan(data), mapFunc)
+	default:
+		panic(fmt.Sprintf("Unexpected data: %v", data))
+	}
 }
 
-func FilterChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
+func filterChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
 	chanType := reflect.TypeOf(dataChan)
 	elemType := chanType.Elem()
 	resultValue := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, elemType), 0)
@@ -171,12 +188,20 @@ func FilterChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
 	return
 }
 
-func Filters(dataSlice interface{}, f interface{}) (resultSlice interface{}) {
-	out := FilterChan(SliceToChan(dataSlice), f)
+func Filters(data interface{}, f interface{}) (resultSlice interface{}) {
+	out := Filter(data, f)
 	resultSlice = ChanToSlice(out)
 	return
 }
 
-func Filter(dataSlice interface{}, f interface{}) (resultChan interface{}) {
-	return FilterChan(SliceToChan(dataSlice), f)
+func Filter(data interface{}, f interface{}) (resultChan interface{}) {
+	dataType := reflect.TypeOf(data)
+	switch dataType.Kind() {
+	case reflect.Chan:
+		return filterChan(data, f)
+	case reflect.Slice:
+		return filterChan(SliceToChan(data), f)
+	default:
+		panic(fmt.Sprintf("Unexpected data: %v", data))
+	}
 }
