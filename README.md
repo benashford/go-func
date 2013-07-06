@@ -1,5 +1,8 @@
 go-func
 =======
+
+[![Build Status](https://travis-ci.org/benashford/go-func.png?branch=master)](https://travis-ci.org/benashford/go-func)
+
 An experiment in both higher-order functions, and how to implement them in Go.
 
 Starting with map, this package provides three functions, vaguely inspired by how map works in Clojure:
