@@ -142,6 +142,20 @@ func TestCombine(t *testing.T) {
 	}
 }
 
+func TestGroupBy(t *testing.T) {
+	a := []string{"a", "bee", "sea", "aitch", "doubleyou", "zed"}
+	b := GroupBy(a, stringLength).(map[int][]string)
+	if len(b) != 4 {
+		t.Error("Should have length 4, has: ", len(b), " b: ", b)
+	}
+	if len(b[3]) != 3 {
+		t.Error("Should have three items of length 3, has: ", b[3])
+	}
+	if b[9][0] != "doubleyou" {
+		t.Error("Expecting 'doubleyou' in position 9: ", b)
+	}
+}
+
 func fib(idx int) int {
 	if idx == 0 {
 		return 1

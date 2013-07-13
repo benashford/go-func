@@ -237,3 +237,42 @@ func Reduce(data interface{}, f interface{}) (result interface{}) {
 	}
 	return
 }
+
+func groupByChan(dataChan interface{}, f interface{}) (result interface{}) {
+	fType := reflect.TypeOf(f)
+	fInType := fType.In(0)
+	fRetType := fType.Out(0)
+
+	sliceOfFInTypes := reflect.SliceOf(fInType)
+	resultValue := reflect.MakeMap(reflect.MapOf(fRetType, sliceOfFInTypes))
+
+	fVal := reflect.ValueOf(f)
+	chanValue := reflect.ValueOf(dataChan)
+	value, ok := chanValue.Recv()
+	for ok {
+		idx := fVal.Call([]reflect.Value{value})[0]
+		existingValue := resultValue.MapIndex(idx)
+		if !existingValue.IsValid() {
+			existingValue = reflect.MakeSlice(sliceOfFInTypes, 0, defaultCapacity)
+		}
+		existingValue = reflect.Append(existingValue, value)
+		resultValue.SetMapIndex(idx, existingValue)
+		value, ok = chanValue.Recv()
+	}
+
+	result = resultValue.Interface()
+	return
+}
+
+func GroupBy(data interface{}, f interface{}) (result interface{}) {
+	dataType := reflect.TypeOf(data)
+	switch dataType.Kind() {
+	case reflect.Chan:
+		result = groupByChan(data, f)
+	case reflect.Slice:
+		result = groupByChan(SliceToChan(data), f)
+	default:
+		panic(fmt.Sprintf("Unexpected data: %v", data))
+	}
+	return
+}
