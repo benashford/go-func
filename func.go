@@ -264,6 +264,26 @@ func groupByChan(dataChan interface{}, f interface{}) (result interface{}) {
 	return
 }
 
+func indexByChan(dataChan interface{}, f interface{}) (result interface{}) {
+	fType := reflect.TypeOf(f)
+	fInType := fType.In(0)
+	fRetType := fType.Out(0)
+
+	resultValue := reflect.MakeMap(reflect.MapOf(fRetType, fInType))
+
+	fVal := reflect.ValueOf(f)
+	chanValue := reflect.ValueOf(dataChan)
+	value, ok := chanValue.Recv()
+	for ok {
+		idx := fVal.Call([]reflect.Value{value})[0]
+		resultValue.SetMapIndex(idx, value)
+		value, ok = chanValue.Recv()
+	}
+
+	result = resultValue.Interface()
+	return
+}
+
 func GroupBy(data interface{}, f interface{}) (result interface{}) {
 	dataType := reflect.TypeOf(data)
 	switch dataType.Kind() {
@@ -271,6 +291,19 @@ func GroupBy(data interface{}, f interface{}) (result interface{}) {
 		result = groupByChan(data, f)
 	case reflect.Slice:
 		result = groupByChan(SliceToChan(data), f)
+	default:
+		panic(fmt.Sprintf("Unexpected data: %v", data))
+	}
+	return
+}
+
+func IndexBy(data interface{}, f interface{}) (result interface{}) {
+	dataType := reflect.TypeOf(data)
+	switch dataType.Kind() {
+	case reflect.Chan:
+		result = indexByChan(data, f)
+	case reflect.Slice:
+		result = indexByChan(SliceToChan(data), f)
 	default:
 		panic(fmt.Sprintf("Unexpected data: %v", data))
 	}

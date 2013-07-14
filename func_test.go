@@ -156,6 +156,26 @@ func TestGroupBy(t *testing.T) {
 	}
 }
 
+type IndexableStruct struct {
+	id int
+	data string
+}
+
+func TestIndexBy(t *testing.T) {
+	metadata := map[string]string{"ABC": "A12", "XYZ": "911", "BBB": "12X"}
+	a := []*IndexableStruct{&IndexableStruct{1, "ABC"}, &IndexableStruct{2, "BBB"}, &IndexableStruct{3, "XYZ"}}
+	b := IndexBy(a, func(s *IndexableStruct) string { return metadata[s.data] }).(map[string]*IndexableStruct)
+	if len(b) != 3 {
+		t.Error("Expecting on three items, actually: ", b)
+	}
+	if b["911"].data != "XYZ" {
+		t.Error("Not expected: ", b)
+	}
+	if b["12X"].id != 2 {
+		t.Error("Not expected: ", b)
+	}
+}
+
 func fib(idx int) int {
 	if idx == 0 {
 		return 1
