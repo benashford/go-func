@@ -186,10 +186,12 @@ func fib(idx int) int {
 	}
 }
 
+const testDataSize = 20
+
 func sourceData() (source []int) {
-	source = make([]int, 16)
-	for i := 0; i < 16; i++ {
-		source[i] = i + 30
+	source = make([]int, testDataSize)
+	for i := 0; i < testDataSize; i++ {
+		source[i] = 20
 	}
 	return
 }
@@ -197,26 +199,25 @@ func sourceData() (source []int) {
 func BenchmarkNone(b *testing.B) {
 	source := sourceData()
 	for i := 0; i < b.N; i++ {
-		dest := make([]int, 16)
+		dest := make([]int, testDataSize)
 		for idx, val := range source {
 			dest[idx] = fib(val)
 		}
-		b.Log(dest)
 	}
 }
 
 func BenchmarkMap(b *testing.B) {
 	source := sourceData()
 	for i := 0; i < b.N; i++ {
-		fibs := Maps(source, fib)
-		b.Log(fibs)
+		fibs := Maps(source, fib).([]int)
+		b.Log(len(fibs))
 	}
 }
 
 func BenchmarkPMap(b *testing.B) {
 	source := sourceData()
 	for i := 0; i < b.N; i++ {
-		fibs := PMaps(source, fib)
-		b.Log(fibs)
+		fibs := PMaps(source, fib).([]int)
+		b.Log(len(fibs))
 	}
 }
