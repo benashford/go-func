@@ -142,7 +142,7 @@ func pMapChan(dataChan interface{}, f interface{}) (resultChan interface{}) {
 	}
 	go pMapFeedInChans(dataChan, inChans)
 
-	resultChanValue := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, fRetType), cpus)
+	resultChanValue := reflect.MakeChan(reflect.ChanOf(reflect.BothDir, fRetType), 0)
 	resultChan = resultChanValue.Interface()
 
 	go pMapDrainOutChans(outChans, resultChanValue)
