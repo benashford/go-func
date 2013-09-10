@@ -14,6 +14,10 @@ var (
 	cpus = runtime.NumCPU()
 )
 
+func init() {
+	runtime.GOMAXPROCS(cpus)
+}
+
 func SliceToChan(dataSlice interface{}) (ch interface{}) {
 	sliceType := reflect.TypeOf(dataSlice)
 	elementType := sliceType.Elem()
